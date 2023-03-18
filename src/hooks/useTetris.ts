@@ -59,7 +59,6 @@ type RotablePiece = Piece & { rotatePosition: number };
 type Piece = {
     name: string;
     color: string;
-    tiles: Tuple[];
     positions: Tuple[][];
 }
 type Tuple = [number, number];
@@ -68,46 +67,39 @@ type Tuple = [number, number];
 const piece1: Piece = {
     name: 'line',
     color: 'bg-cyan-400',
-    tiles: [[0, 0], [0, 1], [0, 2], [0, 3]],
     positions: [[[0, 0], [0, 1], [0, 2], [0, 3]], [[0, 0], [1, 0], [2, 0], [3, 0]]]
 };
 // blue
 const piece2: Piece = {
     name: 'mirrored L',
     color: 'bg-blue-700',
-    tiles: [[1, 0], [1, 1], [0, 2], [1, 2]],
     positions: [[[1, 0], [1, 1], [0, 2], [1, 2]], [[0, 0], [0, 1], [1, 1], [2, 1]], [[0, 0], [0, 1], [0, 2], [1, 0]], [[0, 0], [1, 0], [2, 0], [2, 1]]]
 };
 // orange
 const piece3: Piece = {
     name: 'L',
     color: 'bg-orange-500',
-    tiles: [[0, 0], [0, 1], [0, 2], [1, 2]],
     positions: [[[0, 0], [0, 1], [0, 2], [1, 2]], [[0, 0], [0, 1], [1, 0], [2, 0]], [[0, 0], [1, 0], [1, 1], [1, 2]], [[0, 1], [1, 1], [2, 1], [2, 0]]]
 };
 // yellow
 const piece4: Piece = {
     name: 'square',
     color: 'bg-yellow-400',
-    tiles: [[0, 0], [0, 1], [1, 0], [1, 1]],
     positions: [[[0, 0], [0, 1], [1, 0], [1, 1]]]
 };
 const piece5: Piece = {
     name: 's',
     color: 'bg-green-400',
-    tiles: [[1, 0], [0, 1], [1, 1], [2, 0]],
     positions: [[[1, 0], [0, 1], [1, 1], [2, 0]], [[0, 0], [0, 1], [1, 1], [1, 2]]]
 };
 const piece6: Piece = {
     name: 'triangle',
     color: 'bg-violet-700',
-    tiles: [[0, 0], [1, 0], [1, 1], [2, 0]],
     positions: [[[0, 0], [1, 0], [1, 1], [2, 0]], [[1, 0], [1, 1], [0, 1], [1, 2]], [[0, 1], [1, 0], [1, 1], [2, 1]], [[0, 0], [0, 1], [1, 1], [0, 2]]]
 };
 const piece7: Piece = {
     name: 'red',
     color: 'bg-red-800',
-    tiles: [[0, 0], [1, 0], [1, 1], [2, 1]],
     positions: [[[0, 0], [1, 0], [1, 1], [2, 1]], [[1, 0], [1, 1], [0, 1], [0, 2]]]
 };
 const pieces = [piece1, piece2, piece3, piece4, piece5, piece6, piece7] as const;
