@@ -1,12 +1,8 @@
-import useEventListener from "@use-it/event-listener";
 import { type NextPage } from "next";
 import Head from "next/head";
-import Link from "next/link";
-import { off } from "process";
-import { useEffect, useState } from "react";
-import useTetris, { shouldPaint } from "~/hooks/useTetris";
+import useTetris from "~/hooks/useTetris";
 
-import { api } from "~/utils/api";
+//import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
   //const hello = api.example.hello.useQuery({ text: "from tRPC" });

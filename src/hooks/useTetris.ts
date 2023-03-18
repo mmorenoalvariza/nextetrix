@@ -26,7 +26,7 @@ const useTetris = () => {
             setPiece(nextPiece);
             setNextPiece(getRandomPiece());
         }
-    }, [pieceHeight]);
+    }, [pieceHeight, nextPiece]);
 
     const getNextPieceTiles = () => {
         const pieceTiles = [];
