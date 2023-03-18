@@ -24,16 +24,10 @@ const useTetris = () => {
         key === ' ' && rotatePiece();
         //key === 'ArrowUp' && console.log('up'); 
     };
-
-    const validateBoard = () => {
-
-    }
-
     useEventListener('keydown', handler);
     useEffect(() => {
         if (pieceHeight < 18) {
             const timeout = setTimeout(() => setPieceHeight(h => h + 1), 1200);
-            validateBoard();
             return () => clearTimeout(timeout);
         } else {
             setPieceHeight(0);
