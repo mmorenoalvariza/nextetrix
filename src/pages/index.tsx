@@ -4,36 +4,13 @@ import Head from "next/head";
 import Link from "next/link";
 import { off } from "process";
 import { useEffect, useState } from "react";
+import useTetris, { shouldPaint } from "~/hooks/useTetris";
 
 import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
-  const [pieceHeight, setPieceHeight] = useState(0);
-  const [cursorOffset, setCursorOffset] = useState(5);
-  const [piece, setPiece] = useState(pieces[Math.floor(Math.random() * 5)]);
-  const [nextPiece, setNextPiece] = useState(pieces[Math.floor(Math.random() * 5)]);
-  console.log(piece, nextPiece);
-  const handler = ({ key }: KeyboardEvent) => {
-    key === 'ArrowRight' && setCursorOffset(offset => offset < 10 ? offset + 1 : offset);
-    key === 'ArrowLeft' && setCursorOffset(offset => offset > 0 ? offset - 1 : offset);
-    key === 'ArrowDown' && setPieceHeight(height => height < 18 ? height + 1 : height);
-    key === ' ' && console.log('space');
-    key === 'ArrowUp' && console.log('up');
-  }
-  useEventListener('keydown', handler);
-  useEffect(() => {
-    if (pieceHeight < 18) {
-      const timeout = setTimeout(() => setPieceHeight(h => h + 1), 1200);
-      return () => clearTimeout(timeout);
-    } else {
-      setPieceHeight(0);
-      setPiece(nextPiece);
-      setNextPiece(pieces[Math.floor(Math.random() * 5)]);
-    }
-  }, [pieceHeight]);
-  const hello = api.example.hello.useQuery({ text: "from tRPC" });
-  const board = Array.from(Array(10 * 20).keys());
-  const currentPiece = piece;
+  //const hello = api.example.hello.useQuery({ text: "from tRPC" });
+  const { board, getNextPieceTiles, paintPiece } = useTetris();
   return (
     <>
       <Head>
@@ -42,17 +19,17 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
+        <div className="grid grid-cols-4 grid-rows-4">
+          {getNextPieceTiles().map((color, i) => <div key={i} className={`border w-10 h-10 rounded ${color}`}></div>)}
+        </div>
         <div className="grid grid-cols-10 grid-rows-20">
           {board.map((c, i) => {
             const col = i % 10;
             const row = Math.floor(i / 10);
 
-            const fill = i === 42;
-            const { paint, color } = shouldPaint(col, row, pieceHeight, currentPiece, cursorOffset);
-            // if (paint) {
-            // console.log('p', i, col, row);
-            // }
-            return <div className={`border w-10 h-10 rounded ${paint ? color : ''}`}></div>;
+            const { paint, color } = paintPiece(col, row);
+
+            return <div key={i} className={`border w-10 h-10 rounded ${paint ? color : ''}`}></div>;
           })
           }
 
@@ -63,54 +40,5 @@ const Home: NextPage = () => {
 };
 
 export default Home;
-
-
-const shouldPaint = (c: number, r: number, pieceHeight: number, currentPiece: Piece, cursorOffset: number) => {
-
-  return {
-    paint: currentPiece.tiles.some(s => s[0] + cursorOffset === c && s[1] + pieceHeight === r),
-    color: currentPiece.color
-  }
-}
-// [col, row]
-type Piece = {
-  color: string;
-  tiles: Tuple[];
-}
-type Tuple = [number, number];
-
-//cyan
-const piece1: Piece = {
-  color: 'bg-cyan-400',
-  tiles: [[0, 0], [0, 1], [0, 2], [0, 3]]
-};
-// blue
-const piece2: Piece = {
-  color: 'bg-blue-700',
-  tiles: [[1, 0], [1, 1], [0, 2], [1, 2]]
-};
-// orange
-const piece3: Piece = {
-  color: 'bg-orange-500',
-  tiles: [[0, 0], [0, 1], [0, 2], [1, 2]]
-};
-// yellow
-const piece4: Piece = {
-  color: 'bg-yellow-400',
-  tiles: [[0, 0], [0, 1], [1, 0], [1, 1]]
-};
-const piece5: Piece = {
-  color: 'bg-green-400',
-  tiles: [[1, 0], [0, 1], [1, 1], [2, 0]]
-};
-const piece6: Piece = {
-  color: 'bg-violet-700',
-  tiles: [[0, 0], [1, 0], [1, 1], [2, 0]]
-};
-const piece7: Piece = {
-  color: 'bg-red-800',
-  tiles: [[0, 0], [1, 0], [1, 1], [2, 1]]
-};
-const pieces = [piece1, piece2, piece3, piece4, piece5, piece6, piece7];
 
 
