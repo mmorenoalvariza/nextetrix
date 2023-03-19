@@ -4,18 +4,26 @@ import useEventListener from "@use-it/event-listener";
 const useTetris = () => {
     const [pieceHeight, setPieceHeight] = useState(0);
     const [cursorOffset, setCursorOffset] = useState(0);
-    const [piece, setPiece] = useState(getRandomPiece());
-    const [nextPiece, setNextPiece] = useState(getRandomPiece());
+    const [piece, setPiece] = useState(getNewPiece(false));
+    const [nextPiece, setNextPiece] = useState(getNewPiece(false));
     const board = Array.from(Array(10 * 20).keys());
+    useEffect(() => {
+        // We need to randomize in an useEffect so hydration works https://nextjs.org/docs/messages/react-hydration-error
+        setPiece(getNewPiece());
+        setNextPiece(getNewPiece());
+    }, []);
+
+    const rotatePiece = () => {
+        setPiece(newPiece => ({ ...newPiece, rotatePosition: newPiece.rotatePosition + 1 }));
+    };
 
     const handler = ({ key }: KeyboardEvent) => {
         key === 'ArrowRight' && setCursorOffset(offset => offset < 10 ? offset + 1 : offset);
         key === 'ArrowLeft' && setCursorOffset(offset => offset > 0 ? offset - 1 : offset);
         key === 'ArrowDown' && setPieceHeight(height => height < 18 ? height + 1 : height);
-        key === ' ' && setPiece(piece => ({ ...piece, rotatePosition: piece.rotatePosition++ }));
+        key === ' ' && rotatePiece();
         //key === 'ArrowUp' && console.log('up'); 
     };
-
     useEventListener('keydown', handler);
     useEffect(() => {
         if (pieceHeight < 18) {
@@ -24,7 +32,7 @@ const useTetris = () => {
         } else {
             setPieceHeight(0);
             setPiece(nextPiece);
-            setNextPiece(getRandomPiece());
+            setNextPiece(getNewPiece());
         }
     }, [pieceHeight, nextPiece]);
 
@@ -52,6 +60,14 @@ export const shouldPaint = (c: number, r: number, pieceHeight: number, currentPi
         paint: piecePosition?.some(s => s[0] + cursorOffset === c && s[1] + pieceHeight === r),
         color: currentPiece.color
     }
+}
+
+function getNewPiece(randomize = true): RotablePiece {
+    if (!randomize) {
+        return { ...pieces[0], rotatePosition: 0 };
+    }
+    const pieceNumber = Math.floor(Math.random() * 7) as 0 | 1 | 2 | 3 | 4 | 5 | 6;
+    return { ...pieces[pieceNumber], rotatePosition: 0 };
 }
 
 type RotablePiece = Piece & { rotatePosition: number };
@@ -103,9 +119,3 @@ const piece7: Piece = {
     positions: [[[0, 0], [1, 0], [1, 1], [2, 1]], [[1, 0], [1, 1], [0, 1], [0, 2]]]
 };
 const pieces = [piece1, piece2, piece3, piece4, piece5, piece6, piece7] as const;
-
-
-const getRandomPiece = (): RotablePiece => {
-    const pieceNumber = Math.floor(Math.random() * 7) as 0 | 1 | 2 | 3 | 4 | 5 | 6;
-    return { ...pieces[pieceNumber], rotatePosition: 0 };
-}
