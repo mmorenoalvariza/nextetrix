@@ -6,7 +6,7 @@ import useTetris from "~/hooks/useTetris";
 
 const Home: NextPage = () => {
   //const hello = api.example.hello.useQuery({ text: "from tRPC" });
-  const { board, getNextPieceTiles, paintPiece } = useTetris();
+  const { board, getNextPieceTiles } = useTetris();
   return (
     <>
       <Head>
