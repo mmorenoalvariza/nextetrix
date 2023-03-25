@@ -39,7 +39,7 @@ const validateBoard = (board: Array<BoardPixelType | undefined>, newPiece: Rotab
 const useTetris = () => {
     const [piece, setPiece] = useState(getNewPiece(false));
     const [nextPiece, setNextPiece] = useState(getNewPiece(false));
-    const [board, setBoard] = useState<Array<BoardPixelType | undefined>>(() => Array.from(Array(10 * 20)).fill(undefined));
+    const [board, setBoard] = useState<Array<BoardPixelType | undefined>>(Array.from(Array(10 * 20)).fill(undefined));
 
     const handler = ({ key }: KeyboardEvent) => {
         key === 'ArrowRight' && validateBoard(board, { ...piece, xOffset: piece.xOffset < 10 ? piece.xOffset + 1 : piece.xOffset }, setPiece);
