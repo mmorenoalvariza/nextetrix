@@ -15,20 +15,24 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
+        <h3 className="text-white">Next Piece:</h3>
         <div className="grid grid-cols-4 grid-rows-4">
-          {getNextPieceTiles().map((color, i) => <div key={i} className={`border w-10 h-10 rounded ${color}`}></div>)}
+
+          {getNextPieceTiles().map((color, i) => <div key={i} className={`${color ? 'border' : ''} w-10 h-10 rounded ${color}`}></div>)}
         </div>
-        <div className="grid grid-cols-10 grid-rows-20">
-          {board.map((c, i) => {
-            const col = i % 10;
-            const row = Math.floor(i / 10);
-
-            const { paint, color } = paintPiece(col, row);
-
-            return <div key={i} className={`border w-10 h-10 rounded ${paint ? color : ''}`}></div>;
-          })
-          }
-
+        <div className="flex gap-4">
+          <div>
+            <div className="grid grid-cols-10 grid-rows-20">
+              {board.map((c, i) => {
+                if (c) {
+                  const { paint, color } = c;
+                  return <div key={i} className={`border w-10 h-10 rounded ${paint ? color : ''}`}></div>;
+                }
+                return <div key={i} className={`border w-10 h-10 rounded`}></div>;
+              })
+              }
+            </div>
+          </div>
         </div>
       </main>
     </>

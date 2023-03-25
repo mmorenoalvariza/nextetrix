@@ -1,76 +1,129 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import useEventListener from "@use-it/event-listener";
+import { v4 as uuid } from 'uuid';
+
+
+const updateBoard = (board: Array<BoardPixelType | undefined>, piece: RotablePiece) => {
+    const newBoard = board
+        .map((pixel) => pixel?.pieceId === piece.pieceId ? undefined : pixel)
+        .map((pixel, i) => {
+            const col = i % 10;
+            const row = Math.floor(i / 10);
+            const shouldPaintResult = shouldPaint(col, row, piece);
+            if (shouldPaintResult.paint && !pixel) {
+                return shouldPaintResult;
+            }
+            return pixel;
+        });
+    return newBoard;
+
+}
+const validateBoard = (board: Array<BoardPixelType | undefined>, newPiece: RotablePiece, setPiece: Dispatch<SetStateAction<RotablePiece>>) => {
+    const { positions, rotatePosition } = newPiece;
+    const piecePosition = positions[rotatePosition % positions.length] as Tuple[];
+    const newPosition: Tuple[] = piecePosition.map(([x, y]) => [x + newPiece.xOffset, y + newPiece.yOffset]);
+    const isWithinBounds = newPosition.every(([x, y]) => x < 10 && x >= 0 && y < 20 && y >= 0);
+
+    const isBoardClear = newPosition.every(([x, y]) => {
+        const pixelInfo = board[y * 10 + x];
+        return !pixelInfo || pixelInfo.pieceId === newPiece.pieceId;
+    })
+
+    if (isWithinBounds && isBoardClear) {
+        setPiece(newPiece);
+        return true;
+    }
+    return false;
+}
 
 const useTetris = () => {
-    const [pieceHeight, setPieceHeight] = useState(0);
-    const [cursorOffset, setCursorOffset] = useState(0);
     const [piece, setPiece] = useState(getNewPiece(false));
     const [nextPiece, setNextPiece] = useState(getNewPiece(false));
-    const board = Array.from(Array(10 * 20).keys());
-    useEffect(() => {
-        // We need to randomize in an useEffect so hydration works https://nextjs.org/docs/messages/react-hydration-error
-        setPiece(getNewPiece());
-        setNextPiece(getNewPiece());
-    }, []);
+    const [board, setBoard] = useState<Array<BoardPixelType | undefined>>(() => Array.from(Array(10 * 20)).fill(undefined));
+
 
     const rotatePiece = () => {
         setPiece(newPiece => ({ ...newPiece, rotatePosition: newPiece.rotatePosition + 1 }));
     };
 
     const handler = ({ key }: KeyboardEvent) => {
-        key === 'ArrowRight' && setCursorOffset(offset => offset < 10 ? offset + 1 : offset);
-        key === 'ArrowLeft' && setCursorOffset(offset => offset > 0 ? offset - 1 : offset);
-        key === 'ArrowDown' && setPieceHeight(height => height < 18 ? height + 1 : height);
-        key === ' ' && rotatePiece();
-        //key === 'ArrowUp' && console.log('up'); 
+        key === 'ArrowRight' && validateBoard(board, { ...piece, xOffset: piece.xOffset < 10 ? piece.xOffset + 1 : piece.xOffset }, setPiece);
+        key === 'ArrowLeft' && validateBoard(board, { ...piece, xOffset: piece.xOffset > 0 ? piece.xOffset - 1 : piece.xOffset }, setPiece);
+        key === 'ArrowDown' && validateBoard(board, { ...piece, yOffset: piece.yOffset + 1 }, setPiece);
+        key === 'ArrowUp' && validateBoard(board, { ...piece, yOffset: piece.yOffset - 1 }, setPiece);
+        key === ' ' && validateBoard(board, { ...piece, rotatePosition: piece.rotatePosition + 1 }, setPiece);
     };
     useEventListener('keydown', handler);
     useEffect(() => {
-        if (pieceHeight < 18) {
-            const timeout = setTimeout(() => setPieceHeight(h => h + 1), 1200);
+
+        if (piece.yOffset < 18) {
+            const timeout = setTimeout(() => {
+                const result = validateBoard(board, { ...piece, yOffset: piece.yOffset + 1 }, setPiece);
+                if (!result) {
+                    setPiece(nextPiece);
+                    setNextPiece(getNewPiece());
+                }
+            }, 1200);
             return () => clearTimeout(timeout);
         } else {
-            setPieceHeight(0);
             setPiece(nextPiece);
             setNextPiece(getNewPiece());
         }
-    }, [pieceHeight, nextPiece]);
+    }, [nextPiece, piece]);
+
+    useEffect(() => {
+        setBoard(oldBoard => updateBoard(oldBoard, piece));
+
+    }, [piece])
+
+    useEffect(() => {
+        // We need to randomize in an useEffect so hydration works https://nextjs.org/docs/messages/react-hydration-error
+        setPiece(getNewPiece());
+        setNextPiece(getNewPiece());
+        setBoard(Array.from(Array(10 * 20)).fill(undefined));
+    }, []);
 
     const getNextPieceTiles = () => {
         const pieceTiles = [];
         for (let i = 0; i < 16; i++) {
             const col = i % 4;
             const row = Math.floor(i / 4);
-            const { paint, color } = shouldPaint(col, row, 0, nextPiece, 0);
+            const { paint, color } = shouldPaint(col, row, nextPiece);
             pieceTiles.push(paint ? color : '');
         }
         return pieceTiles;
     };
-    const paintPiece = (col: number, row: number) => shouldPaint(col, row, pieceHeight, piece, cursorOffset);
+    const paintPiece = (col: number, row: number) => shouldPaint(col, row, piece);
     return { board, getNextPieceTiles, paintPiece }
 
 }
 
 export default useTetris;
 
-export const shouldPaint = (c: number, r: number, pieceHeight: number, currentPiece: RotablePiece, cursorOffset: number) => {
+type BoardPixelType = {
+    paint: boolean;
+    color: string;
+    pieceId: string;
+}
+export const shouldPaint = (c: number, r: number, currentPiece: RotablePiece): BoardPixelType => {
     const { positions, rotatePosition } = currentPiece;
-    const piecePosition = positions[rotatePosition % positions.length];
+    const piecePosition = positions[rotatePosition % positions.length] as Tuple[];
     return {
-        paint: piecePosition?.some(s => s[0] + cursorOffset === c && s[1] + pieceHeight === r),
-        color: currentPiece.color
+        paint: piecePosition?.some(s => s[0] + currentPiece.xOffset === c && s[1] + currentPiece.yOffset === r),
+        color: currentPiece.color,
+        pieceId: currentPiece.pieceId
     }
 }
 
 function getNewPiece(randomize = true): RotablePiece {
     if (!randomize) {
-        return { ...pieces[0], rotatePosition: 0 };
+        return { ...pieces[0], rotatePosition: 0, pieceId: '', yOffset: 0, xOffset: 0 };
     }
     const pieceNumber = Math.floor(Math.random() * 7) as 0 | 1 | 2 | 3 | 4 | 5 | 6;
-    return { ...pieces[pieceNumber], rotatePosition: 0 };
+    return { ...pieces[pieceNumber], rotatePosition: 0, pieceId: uuid(), yOffset: 0, xOffset: 0 };
 }
 
-type RotablePiece = Piece & { rotatePosition: number };
+type RotablePiece = Piece & { rotatePosition: number; pieceId: string; yOffset: number, xOffset: number };
 // [col, row]
 type Piece = {
     name: string;
