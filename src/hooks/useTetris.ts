@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import useEventListener from "@use-it/event-listener";
 import { v4 as uuid } from 'uuid';
 
@@ -41,11 +41,6 @@ const useTetris = () => {
     const [nextPiece, setNextPiece] = useState(getNewPiece(false));
     const [board, setBoard] = useState<Array<BoardPixelType | undefined>>(() => Array.from(Array(10 * 20)).fill(undefined));
 
-
-    const rotatePiece = () => {
-        setPiece(newPiece => ({ ...newPiece, rotatePosition: newPiece.rotatePosition + 1 }));
-    };
-
     const handler = ({ key }: KeyboardEvent) => {
         key === 'ArrowRight' && validateBoard(board, { ...piece, xOffset: piece.xOffset < 10 ? piece.xOffset + 1 : piece.xOffset }, setPiece);
         key === 'ArrowLeft' && validateBoard(board, { ...piece, xOffset: piece.xOffset > 0 ? piece.xOffset - 1 : piece.xOffset }, setPiece);
@@ -69,7 +64,7 @@ const useTetris = () => {
             setPiece(nextPiece);
             setNextPiece(getNewPiece());
         }
-    }, [nextPiece, piece]);
+    }, [nextPiece, piece, board]);
 
     useEffect(() => {
         setBoard(oldBoard => updateBoard(oldBoard, piece));
@@ -93,8 +88,8 @@ const useTetris = () => {
         }
         return pieceTiles;
     };
-    const paintPiece = (col: number, row: number) => shouldPaint(col, row, piece);
-    return { board, getNextPieceTiles, paintPiece }
+
+    return { board, getNextPieceTiles }
 
 }
 
