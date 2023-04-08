@@ -15,9 +15,26 @@ const updateBoard = (board: Array<BoardPixelType | undefined>, piece: RotablePie
             }
             return pixel;
         });
+    
     return newBoard;
 
 }
+
+const updateBoardRemovingWinningRows = (board: Array<BoardPixelType | undefined>) => {
+    const newBoard: Array<BoardPixelType | undefined> = []
+    for(let i = 0; i<20; i++) {
+        const row = board.slice(i*10, i*10+10);
+        
+        const winningRow = row.every(r => r);
+        if(winningRow) {
+            newBoard.unshift(...Array.from(Array(10)).fill(undefined))
+        } else {
+            newBoard.push(...row);
+        }
+    }
+    return newBoard;
+}
+
 const validateBoard = (board: Array<BoardPixelType | undefined>, newPiece: RotablePiece, setPiece: Dispatch<SetStateAction<RotablePiece>>) => {
     const { positions, rotatePosition } = newPiece;
     const piecePosition = positions[rotatePosition % positions.length] as Tuple[];
@@ -36,38 +53,53 @@ const validateBoard = (board: Array<BoardPixelType | undefined>, newPiece: Rotab
     return false;
 }
 
+const isNextMovePossible = (board: Array<BoardPixelType | undefined>, newPiece: RotablePiece) => {
+    const { positions, rotatePosition } = newPiece;
+    const piecePosition = positions[rotatePosition % positions.length] as Tuple[];
+    const newPosition: Tuple[] = piecePosition.map(([x, y]) => [x + newPiece.xOffset, y + newPiece.yOffset + 1]);
+
+    const isBoardClear = newPosition.every(([x, y]) => {
+        const boardIndex = y * 10 + x;
+        const pixelInfo = board[boardIndex];
+        return (!pixelInfo || pixelInfo.pieceId === newPiece.pieceId) && boardIndex < 200;
+    })
+    return isBoardClear;
+}
+
 const useTetris = () => {
     const [piece, setPiece] = useState(getNewPiece(false));
     const [nextPiece, setNextPiece] = useState(getNewPiece(false));
-    const [board, setBoard] = useState<Array<BoardPixelType | undefined>>(Array.from(Array(10 * 20)).fill(undefined));
+    const [board, setBoard] = useState<Array<BoardPixelType | undefined>>(getNewBoardPrefilled);
 
     const handler = ({ key }: KeyboardEvent) => {
         key === 'ArrowRight' && validateBoard(board, { ...piece, xOffset: piece.xOffset < 10 ? piece.xOffset + 1 : piece.xOffset }, setPiece);
         key === 'ArrowLeft' && validateBoard(board, { ...piece, xOffset: piece.xOffset > 0 ? piece.xOffset - 1 : piece.xOffset }, setPiece);
         key === 'ArrowDown' && validateBoard(board, { ...piece, yOffset: piece.yOffset + 1 }, setPiece);
+        //The below line is for testing only
         key === 'ArrowUp' && validateBoard(board, { ...piece, yOffset: piece.yOffset - 1 }, setPiece);
-        key === ' ' && validateBoard(board, { ...piece, rotatePosition: piece.rotatePosition + 1 }, setPiece);
+        key === ' ' && validateBoard(board, { ...piece, rotatePosition: piece.rotatePosition + 1 }, setPiece); 
     };
+
     useEventListener('keydown', handler);
     useEffect(() => {
-
-        if (piece.yOffset < 18) {
             const timeout = setTimeout(() => {
                 const result = validateBoard(board, { ...piece, yOffset: piece.yOffset + 1 }, setPiece);
-                if (!result) {
+                if (!result) {  
                     setPiece(nextPiece);
                     setNextPiece(getNewPiece());
                 }
             }, 1200);
             return () => clearTimeout(timeout);
-        } else {
-            setPiece(nextPiece);
-            setNextPiece(getNewPiece());
-        }
     }, [nextPiece, piece, board]);
 
     useEffect(() => {
-        setBoard(oldBoard => updateBoard(oldBoard, piece));
+        setBoard(oldBoard => {
+            const nextMovePossible = isNextMovePossible(oldBoard, piece);
+            if (nextMovePossible) {
+                return updateBoard(oldBoard, piece);
+            }
+            return updateBoardRemovingWinningRows(updateBoard(oldBoard, piece))
+        });
 
     }, [piece])
 
@@ -75,7 +107,7 @@ const useTetris = () => {
         // We need to randomize in an useEffect so hydration works https://nextjs.org/docs/messages/react-hydration-error
         setPiece(getNewPiece());
         setNextPiece(getNewPiece());
-        setBoard(Array.from(Array(10 * 20)).fill(undefined));
+        setBoard(getNewBoardPrefilled);
     }, []);
 
     const getNextPieceTiles = () => {
@@ -108,6 +140,23 @@ export const shouldPaint = (c: number, r: number, currentPiece: RotablePiece): B
         color: currentPiece.color,
         pieceId: currentPiece.pieceId
     }
+}
+
+function getNewBoard() {
+    return Array.from(Array(10 * 20)).fill(undefined);
+}
+
+//Utility to prefill the last four rows of the board (for testing purposes)
+function getNewBoardPrefilled() {
+
+    const board: Array<BoardPixelType | undefined> = Array.from(Array(10 * 20)).fill(undefined);
+    for(let i = 161; i<170; i++){
+        const piece = getNewPiece();
+        piece.positions[0]?.forEach(tuple =>{
+            board[ i + (tuple[0] + (tuple[1] * 10)) ] = {paint: true, color: piece.color, pieceId: piece.pieceId}
+        })
+    }
+    return board;
 }
 
 function getNewPiece(randomize = true): RotablePiece {
