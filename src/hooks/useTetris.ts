@@ -27,7 +27,7 @@ const updateBoardRemovingWinningRows = (board: Array<BoardPixelType | undefined>
         
         const winningRow = row.every(r => r);
         if(winningRow) {
-            newBoard.unshift(...Array.from(Array(10)).fill(undefined))
+            newBoard.unshift(...Array.from<undefined>(Array(10)).fill(undefined))
         } else {
             newBoard.push(...row);
         }
@@ -143,13 +143,13 @@ export const shouldPaint = (c: number, r: number, currentPiece: RotablePiece): B
 }
 
 function getNewBoard() {
-    return Array.from(Array(10 * 20)).fill(undefined);
+    return Array.from<undefined>(Array(10 * 20)).fill(undefined);
 }
 
 //Utility to prefill the last four rows of the board (for testing purposes)
 function getNewBoardPrefilled() {
 
-    const board: Array<BoardPixelType | undefined> = Array.from(Array(10 * 20)).fill(undefined);
+    const board: Array<BoardPixelType | undefined> = Array.from<undefined>(Array(10 * 20)).fill(undefined);
     for(let i = 161; i<170; i++){
         const piece = getNewPiece();
         piece.positions[0]?.forEach(tuple =>{
